@@ -45,7 +45,6 @@ export class StorageManager {
             };
             
             localStorage.setItem(this.storageKey, JSON.stringify(dataToStore));
-            console.log('Đã lưu thông tin khách hàng vào localStorage');
             return true;
         } catch (e) {
             console.error('Lỗi khi lưu thông tin khách hàng:', e);
@@ -66,7 +65,6 @@ export class StorageManager {
             const storedData = localStorage.getItem(this.storageKey);
             
             if (!storedData) {
-                console.log('Không tìm thấy thông tin khách hàng trong localStorage');
                 return null;
             }
             
@@ -89,7 +87,6 @@ export class StorageManager {
                 return null;
             }
             
-            console.log('Đã lấy thông tin khách hàng từ localStorage');
             return parsedData;
         } catch (e) {
             console.error('Lỗi khi lấy thông tin khách hàng:', e);
@@ -116,7 +113,6 @@ export class StorageManager {
             this.chatApp.currentRoomId = null;
             this.chatApp.joinedRooms = [];
             
-            console.log('Đã xóa thông tin khách hàng từ localStorage');
             return true;
         } catch (e) {
             console.error('Lỗi khi xóa thông tin khách hàng:', e);
@@ -235,7 +231,6 @@ export class StorageManager {
             
             if (publicRooms.length > 0) {
                 localStorage.setItem(storageKey, JSON.stringify(publicRooms));
-                console.log('Đã lưu danh sách phòng chat công khai đã tham gia:', publicRooms);
             }
         } catch (e) {
             console.error('Lỗi khi lưu danh sách phòng chat công khai đã tham gia:', e);
@@ -255,7 +250,6 @@ export class StorageManager {
             if (!storedRooms) return [];
             
             const rooms = JSON.parse(storedRooms);
-            console.log('Đã lấy danh sách phòng chat công khai đã tham gia:', rooms);
             return rooms;
         } catch (e) {
             console.error('Lỗi khi lấy danh sách phòng chat công khai đã tham gia:', e);
@@ -280,7 +274,6 @@ export class StorageManager {
                 // Thêm phòng vào danh sách
                 joinedRooms.push(room);
                 localStorage.setItem(storageKey, JSON.stringify(joinedRooms));
-                console.log('Đã thêm phòng chat công khai vào danh sách đã tham gia:', room);
             }
         } catch (e) {
             console.error('Lỗi khi thêm phòng chat công khai vào danh sách đã tham gia:', e);
@@ -301,7 +294,6 @@ export class StorageManager {
             joinedRooms = joinedRooms.filter(room => room._id !== roomId);
             
             localStorage.setItem(storageKey, JSON.stringify(joinedRooms));
-            console.log('Đã xóa phòng chat công khai khỏi danh sách đã tham gia:', roomId);
         } catch (e) {
             console.error('Lỗi khi xóa phòng chat công khai khỏi danh sách đã tham gia:', e);
         }

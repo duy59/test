@@ -92,10 +92,21 @@ export class MessageManager {
      * Hiển thị tin nhắn
      */
     displayMessage(message) {
- 
+        // Kiểm tra xem tin nhắn đã được hiển thị chưa
+        // if (message.id && this.displayedMessageIds.has(message.id) && !message.isTemp) {
+        //     console.log('Tin nhắn đã được hiển thị trước đó, bỏ qua:', message.id);
+        //     return;
+        // }
         
-        // Lấy container cho tin nhắn
+        // Kiểm tra xem tin nhắn đã tồn tại trong DOM chưa
         const messagesContainer = this.getOrCreateMessagesContainer();
+        if (message.id && !message.isTemp) {
+            const existingMessage = messagesContainer.querySelector(`.message[data-id="${message.id}"]`);
+            if (existingMessage) {
+                console.log('Tin nhắn đã tồn tại trong DOM, bỏ qua:', message.id);
+                return;
+            }
+        }
         
         // Tạo phần tử tin nhắn
         const messageElement = document.createElement('div');
@@ -126,8 +137,12 @@ export class MessageManager {
             }
         }
         
+        // Tạo container cho nội dung và thời gian
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'message-content-container';
+        
         // Xử lý nội dung tin nhắn
-        const messageText = document.createElement('div');
+        const messageText = document.createElement('span');
         messageText.className = 'message-text';
         
         // Xử lý nội dung tin nhắn (thêm liên kết, emoji, v.v.)
@@ -135,7 +150,7 @@ export class MessageManager {
         messageText.innerHTML = processedContent;
         
         // Thêm thời gian
-        const timeElement = document.createElement('div');
+        const timeElement = document.createElement('span');
         timeElement.className = 'time';
         
         try {
@@ -145,9 +160,12 @@ export class MessageManager {
             timeElement.textContent = 'Vừa xong';
         }
         
-        // Thêm nội dung vào tin nhắn
-        messageElement.appendChild(messageText);
-        messageElement.appendChild(timeElement);
+        // Thêm nội dung và thời gian vào container
+        contentContainer.appendChild(messageText);
+        contentContainer.appendChild(timeElement);
+        
+        // Thêm container vào tin nhắn
+        messageElement.appendChild(contentContainer);
         
         // Thêm tin nhắn vào container
         messagesContainer.appendChild(messageElement);
