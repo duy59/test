@@ -92,11 +92,7 @@ export class MessageManager {
      * Hiển thị tin nhắn
      */
     displayMessage(message) {
-        // Kiểm tra xem tin nhắn đã được hiển thị chưa
-        // if (message.id && this.displayedMessageIds.has(message.id) && !message.isTemp) {
-        //     console.log('Tin nhắn đã được hiển thị trước đó, bỏ qua:', message.id);
-        //     return;
-        // }
+ 
         
         // Lấy container cho tin nhắn
         const messagesContainer = this.getOrCreateMessagesContainer();
@@ -218,18 +214,15 @@ export class MessageManager {
      * Xử lý tin nhắn mới
      */
     handleNewMessage(message) {
-        console.log('MessageManager xử lý tin nhắn mới:', message);
         
         // Kiểm tra xem tin nhắn có ID không
         if (!message.id) {
-            console.log('Tin nhắn không có ID, xử lý bình thường');
             this.displayMessage(message);
             return;
         }
         
         // Kiểm tra xem tin nhắn đã được hiển thị chưa
         if (this.displayedMessageIds.has(message.id)) {
-            console.log('Tin nhắn đã được hiển thị trước đó, bỏ qua:', message.id);
             return;
         }
         
@@ -241,7 +234,6 @@ export class MessageManager {
         const existsInDOM = messagesContainer.querySelector(`.message[data-id="${message.id}"]`);
         
         if (existsInDOM) {
-            console.log('Tin nhắn đã tồn tại trong DOM, bỏ qua:', message.id);
             return;
         }
         

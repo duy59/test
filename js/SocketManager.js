@@ -59,7 +59,6 @@ export class SocketManager {
             // Đăng ký các sự kiện
             this.registerEvents();
             
-            console.log('Đang kết nối đến server:', serverUrl);
         } catch (error) {
             console.error('Lỗi khi kết nối socket:', error);
             this.chatApp.notification.showNotification('Không thể kết nối đến server. Vui lòng thử lại sau.', 'error');
@@ -82,7 +81,6 @@ export class SocketManager {
         
         // Sự kiện kết nối thành công
         this.socket.on('connect', () => {
-            console.log('Kết nối socket thành công, socket ID:', this.socket.id);
             this.chatApp.isConnected = true;
             this.reconnectAttempts = 0;
             
@@ -94,7 +92,6 @@ export class SocketManager {
         
         // Sự kiện mất kết nối
         this.socket.on('disconnect', (reason) => {
-            console.log('Mất kết nối socket, lý do:', reason);
             this.chatApp.isConnected = false;
             
             // Hiển thị thông báo
@@ -120,7 +117,6 @@ export class SocketManager {
         
         // Sự kiện nhận tin nhắn mới
         this.socket.on('new_message', (message) => {
-            console.log('Nhận tin nhắn mới:', message);
             
             // Xử lý tin nhắn mới
             this.handleNewMessage(message);
@@ -128,7 +124,6 @@ export class SocketManager {
         
         // Sự kiện nhận danh sách phòng chat
         this.socket.on('room_list', (data) => {
-            console.log('Nhận danh sách phòng chat:', data);
             
             // Cập nhật danh sách phòng
             if (data.rooms) {
@@ -143,7 +138,6 @@ export class SocketManager {
         
         // Sự kiện nhận thông tin domain
         this.socket.on('domain_info', (data) => {
-            console.log('Nhận thông tin domain:', data);
             
             // Lưu thông tin domain
             this.chatApp.domainInfo = data;
@@ -151,7 +145,6 @@ export class SocketManager {
         
         // Sự kiện nhận danh sách người dùng trong phòng chat công khai
         this.socket.on('room_users_list', (data) => {
-            console.log('Nhận danh sách người dùng trong phòng chat:', data);
             
             // Cập nhật danh sách người dùng
             if (data.users && this.chatApp.currentView === 'public-chat') {
@@ -172,7 +165,6 @@ export class SocketManager {
         
         this.reconnectAttempts++;
         
-        console.log(`Đang thử kết nối lại lần ${this.reconnectAttempts}/${this.maxReconnectAttempts} sau ${this.reconnectDelay}ms...`);
         
         // Thử kết nối lại sau một khoảng thời gian
         setTimeout(() => {
@@ -199,7 +191,6 @@ export class SocketManager {
             return;
         }
         
-        console.log('Đang kết nối lại với thông tin khách hàng:', this.chatApp.customerId);
         
         // Gửi thông tin khách hàng để kết nối lại
         this.emit('customer_reconnect', {
@@ -208,7 +199,6 @@ export class SocketManager {
             domain: window.location.hostname
         }, (response) => {
             if (response && response.success) {
-                console.log('Kết nối lại thành công:', response);
                 
                 // Cập nhật thông tin nếu có
                 if (response.customerInfo) {
@@ -327,11 +317,9 @@ export class SocketManager {
      * @param {function} callback - Hàm callback khi lấy danh sách phòng chat xong
      */
     getPublicRooms(callback) {
-        console.log('Gửi yêu cầu lấy danh sách phòng chat công khai');
         
         this.emit('get_public_rooms', { include_global: true }, (response) => {
             if (response && response.success) {
-                console.log('Nhận danh sách phòng chat công khai:', response);
                 callback(response);
             } else {
                 console.error('Lấy danh sách phòng chat công khai thất bại:', response ? response.error : 'Không có phản hồi');
@@ -349,11 +337,9 @@ export class SocketManager {
      * @param {function} callback - Hàm callback khi tham gia phòng chat xong
      */
     joinPublicRoom(roomId, callback) {
-        console.log('Gửi yêu cầu tham gia phòng chat công khai:', roomId);
         
         this.emit('join_public_room', { room_id: roomId }, (response) => {
             if (response && response.success) {
-                console.log('Tham gia phòng chat công khai thành công:', response);
                 callback(response);
             } else {
                 console.error('Tham gia phòng chat công khai thất bại:', response ? response.error : 'Không có phản hồi');
@@ -371,11 +357,9 @@ export class SocketManager {
      * @param {function} callback - Hàm callback khi rời phòng chat xong
      */
     leavePublicRoom(roomId, callback) {
-        console.log('Gửi yêu cầu rời phòng chat công khai:', roomId);
         
         this.emit('leave_public_room', { room_id: roomId }, (response) => {
             if (response && response.success) {
-                console.log('Rời phòng chat công khai thành công:', response);
                 callback(response);
             } else {
                 console.error('Rời phòng chat công khai thất bại:', response ? response.error : 'Không có phản hồi');
@@ -393,17 +377,14 @@ export class SocketManager {
      * @param {function} callback - Hàm callback khi gửi tin nhắn xong
      */
     sendPublicMessage(messageObj, callback) {
-        console.log('Gửi tin nhắn trong phòng chat công khai:', messageObj);
         
         this.emit('send_public_message', messageObj, (response) => {
             if (response && response.success) {
-                console.log('Gửi tin nhắn trong phòng chat công khai thành công:', response);
                 
                 // Lưu ID tin nhắn đã gửi vào cả hai Set để ngăn hiển thị lại
                 if (response.message && response.message.id) {
                     this.sentMessageIds.add(response.message.id);
                     this.chatApp.messageManager.displayedMessageIds.add(response.message.id);
-                    console.log('Đã lưu ID tin nhắn vào sentMessageIds và displayedMessageIds:', response.message.id);
                 }
                 
                 callback(response);
@@ -422,11 +403,9 @@ export class SocketManager {
      * @param {object} message - Tin nhắn mới nhận từ server
      */
     handleNewMessage(message) {
-        console.log('SocketManager xử lý tin nhắn mới:', message);
         
         // Kiểm tra xem tin nhắn có ID không
         if (!message.id) {
-            console.log('Tin nhắn không có ID, xử lý bình thường');
             this.chatApp.messageManager.handleNewMessage(message);
             return;
         }
@@ -438,24 +417,32 @@ export class SocketManager {
         const isInSentMessageIds = this.sentMessageIds.has(message.id);
         const isInDisplayedMessageIds = this.chatApp.messageManager.displayedMessageIds.has(message.id);
         
-        console.log('Kiểm tra tin nhắn với ID:', message.id);
-        console.log('Là tin nhắn từ khách hàng:', isFromCustomer);
-        console.log('Có trong sentMessageIds:', isInSentMessageIds);
-        console.log('Có trong displayedMessageIds:', isInDisplayedMessageIds);
         
         // Kiểm tra xem tin nhắn đã tồn tại trong DOM chưa
         const messagesContainer = this.chatApp.messageManager.getOrCreateMessagesContainer();
         const existsInDOM = messagesContainer.querySelector(`.message[data-id="${message.id}"]`);
-        console.log('Đã tồn tại trong DOM:', !!existsInDOM);
         
         // Nếu tin nhắn đã tồn tại trong DOM hoặc đã được lưu trong một trong hai Set, bỏ qua
         if (existsInDOM || isInSentMessageIds || isInDisplayedMessageIds) {
-            console.log('Tin nhắn đã được xử lý trước đó, bỏ qua để tránh hiển thị hai lần');
+            return;
+        }
+        
+        // Kiểm tra xem có phải tin nhắn tạm thời không
+        const tempMessage = messagesContainer.querySelector(`.message[data-temp="true"]`);
+        if (tempMessage && isFromCustomer) {
+            // Nếu là tin nhắn từ khách hàng và có tin nhắn tạm thời, cập nhật tin nhắn tạm thời
+            tempMessage.setAttribute('data-id', message.id);
+            tempMessage.classList.remove('temp-message');
+            tempMessage.removeAttribute('data-temp');
+            
+            // Thêm ID vào Set để tránh hiển thị lại
+            this.sentMessageIds.add(message.id);
+            this.chatApp.messageManager.displayedMessageIds.add(message.id);
+            
             return;
         }
         
         // Nếu là tin nhắn mới, xử lý bình thường
-        console.log('Tin nhắn mới, xử lý bình thường');
         this.chatApp.messageManager.handleNewMessage(message);
     }
     
@@ -465,18 +452,15 @@ export class SocketManager {
      * @param {function} callback - Hàm callback khi gửi tin nhắn xong
      */
     handleSendMessage(messageObj, callback) {
-        console.log('Xử lý gửi tin nhắn:', messageObj);
         
         // Gửi tin nhắn đến server
         this.emit('send_message', messageObj, (response) => {
             if (response.success) {
-                console.log('Gửi tin nhắn thành công, nhận phản hồi từ server:', response);
                 
                 // Lưu ID tin nhắn đã gửi vào cả hai Set để ngăn hiển thị lại
                 if (response.message && response.message.id) {
                     this.sentMessageIds.add(response.message.id);
                     this.chatApp.messageManager.displayedMessageIds.add(response.message.id);
-                    console.log('Đã lưu ID tin nhắn đã gửi vào cả sentMessageIds và displayedMessageIds:', response.message.id);
                 }
             }
             

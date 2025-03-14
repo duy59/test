@@ -47,7 +47,6 @@ export class NotificationManager {
      */
     checkNotificationPermission() {
         if (!('Notification' in window)) {
-            console.log('Trình duyệt này không hỗ trợ thông báo desktop');
             return;
         }
         
@@ -55,7 +54,6 @@ export class NotificationManager {
         
         if (this.notificationPermission === 'default') {
             // Sẽ yêu cầu quyền khi người dùng tương tác
-            console.log('Chưa yêu cầu quyền thông báo');
         }
     }
     
@@ -72,7 +70,6 @@ export class NotificationManager {
         }
         
         if (this.notificationPermission === 'denied') {
-            console.log('Người dùng đã từ chối quyền thông báo');
             return Promise.resolve(false);
         }
         
@@ -160,7 +157,6 @@ export class NotificationManager {
     showDesktopNotification(title, options = {}) {
         // Kiểm tra xem trình duyệt có hỗ trợ thông báo không
         if (!('Notification' in window)) {
-            console.log('Trình duyệt này không hỗ trợ thông báo desktop');
             return;
         }
         

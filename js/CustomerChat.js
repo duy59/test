@@ -50,13 +50,11 @@ export class CustomerChat {
             this.customerId = storedData.customerId;
             this.isRegistered = true;
             
-            console.log('Đã tìm thấy thông tin khách hàng đã lưu:', this.customerId);
             
             // Khôi phục danh sách phòng chat công khai đã tham gia
             this.joinedRooms = this.storage.getStoredJoinedPublicRooms() || [];
             
             if (this.joinedRooms.length > 0) {
-                console.log('Đã khôi phục danh sách phòng chat công khai đã tham gia:', this.joinedRooms);
             }
             
             // Khôi phục trạng thái tin nhắn chưa đọc
@@ -95,18 +93,15 @@ export class CustomerChat {
      */
     autoRejoinPublicRooms() {
         if (!this.isConnected || !this.isRegistered || !this.joinedRooms || this.joinedRooms.length === 0) {
-            console.log('Không có phòng chat công khai nào để tham gia lại');
             return;
         }
         
-        console.log('Tự động tham gia lại các phòng chat công khai đã tham gia trước đó:', this.joinedRooms);
         
         // Nếu đang ở trong phòng chat công khai, tham gia lại phòng đó
         if (this.currentRoomId && this.currentView === 'public-chat') {
             const currentRoom = this.joinedRooms.find(room => room._id === this.currentRoomId);
             
             if (currentRoom) {
-                console.log('Tham gia lại phòng chat công khai hiện tại:', currentRoom);
                 this.joinPublicRoom(currentRoom._id);
                 return;
             }
@@ -114,7 +109,6 @@ export class CustomerChat {
         
         // Nếu không có phòng hiện tại, chỉ cập nhật danh sách phòng đã tham gia
         // Không tự động tham gia vào bất kỳ phòng nào để tránh gây khó chịu cho người dùng
-        console.log('Đã khôi phục danh sách phòng chat công khai đã tham gia, nhưng không tự động tham gia');
     }
     
     /**
@@ -153,7 +147,6 @@ export class CustomerChat {
     registerCustomer(info) {
         // Kiểm tra kết nối và thử kết nối lại nếu cần
         if (!this.isConnected) {
-            console.log('Chưa kết nối đến server, đang thử kết nối lại...');
             
             // Hiển thị thông báo đang kết nối
             this.notification.showNotification('Đang kết nối đến server...', 'info');
@@ -163,7 +156,6 @@ export class CustomerChat {
             
             // Đợi kết nối thành công rồi đăng ký
             this.socket.once('connect', () => {
-                console.log('Đã kết nối lại, tiếp tục đăng ký');
                 this.isConnected = true;
                 this.registerCustomer(info);
             });
@@ -171,7 +163,6 @@ export class CustomerChat {
             return;
         }
         
-        console.log('Đăng ký khách hàng với thông tin:', info);
         
         // Lấy thông tin thiết bị
         const deviceInfo = this.getDeviceInfo();
@@ -191,7 +182,6 @@ export class CustomerChat {
         // Gửi thông tin đăng ký
         this.socket.emit('customer_register', this.customerInfo, (response) => {
             if (response && response.success) {
-                console.log('Đăng ký thành công:', response);
                 
                 // Lưu ID khách hàng
                 this.customerId = response.customerId || response.customer_id;
@@ -239,7 +229,6 @@ export class CustomerChat {
         // Gửi yêu cầu cập nhật
         this.socket.emit('update_customer_info', updateData, (response) => {
             if (response && response.success) {
-                console.log('Cập nhật thông tin thành công:', response);
                 
                 // Cập nhật thông tin khách hàng
                 this.customerInfo = {
@@ -283,7 +272,6 @@ export class CustomerChat {
         
         // Kiểm tra xem có cần cập nhật thông tin không
         if (this.needInfoUpdate) {
-            console.log('Cần cập nhật thông tin khách hàng');
             this.ui.requestInfoUpdate('direct');
             return;
         }
@@ -312,14 +300,12 @@ export class CustomerChat {
         // Hiển thị thông báo đang kết nối
         this.messageManager.displaySystemMessage('Đang kết nối với nhân viên hỗ trợ...');
         
-        console.log('Gửi yêu cầu tham gia phòng chat trực tiếp với customerId:', this.customerId);
         
         // Gửi yêu cầu tham gia phòng chat trực tiếp
         this.socket.emit('join_direct_chat', {
             customerId: this.customerId
         }, (response) => {
             if (response && response.success) {
-                console.log('Tham gia phòng chat trực tiếp thành công:', response);
                 this.currentRoomId = response.roomId;
                 
                 // Hiển thị tin nhắn chào mừng
@@ -355,12 +341,10 @@ export class CustomerChat {
      * Tải lịch sử chat từ server
      */
     loadChatHistory(roomId) {
-        console.log('Đang tải lịch sử chat cho phòng:', roomId);
         
         // Gửi yêu cầu lấy lịch sử chat
         this.socket.emit('get_chat_history', { roomId }, (response) => {
             if (response && response.success) {
-                console.log('Nhận lịch sử chat từ socket:', response);
                 
                 // Xóa tin nhắn cũ
                 const messagesContainer = this.messageManager.getOrCreateMessagesContainer();
@@ -403,7 +387,6 @@ export class CustomerChat {
         .then(response => response.json())
         .then(data => {
             if (data.messages) {
-                console.log('Nhận lịch sử chat từ API:', data);
                 
                 // Xóa tin nhắn cũ
                 const messagesContainer = this.messageManager.getOrCreateMessagesContainer();
@@ -443,7 +426,6 @@ export class CustomerChat {
     joinChatRoom(roomId) {
         this.socket.emit('join_room', { roomId }, (response) => {
             if (response.success) {
-                console.log('Tham gia phòng chat thành công:', response);
                 this.currentRoomId = roomId;
                 
                 // Cập nhật danh sách phòng đã tham gia
@@ -486,7 +468,6 @@ export class CustomerChat {
         
         // Tạo ID tạm thời cho tin nhắn
         const tempId = 'temp-' + Date.now();
-        console.log('Tạo tin nhắn tạm thời với ID:', tempId);
         
         // Hiển thị tin nhắn tạm thời (optimistic UI)
         const tempMessage = {
@@ -512,7 +493,6 @@ export class CustomerChat {
             type: 'text'
         };
         
-        console.log('Gửi tin nhắn đến server:', messageObj);
         
         // Gửi tin nhắn đến server
         this.socket.emit('send_message', messageObj, (response) => {
@@ -520,13 +500,11 @@ export class CustomerChat {
             const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
             
             if (response.success) {
-                console.log('Gửi tin nhắn thành công, nhận phản hồi từ server:', response);
                 
                 // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
                 if (response.message && response.message.id) {
                     this.socket.sentMessageIds.add(response.message.id);
                     this.messageManager.displayedMessageIds.add(response.message.id);
-                    console.log('Đã lưu ID tin nhắn vào sentMessageIds và displayedMessageIds:', response.message.id);
                 }
                 
                 // Cập nhật tin nhắn tạm thời thành tin nhắn thật
@@ -545,7 +523,6 @@ export class CustomerChat {
                         }
                     }
                     
-                    console.log('Đã cập nhật tin nhắn tạm thời thành công');
                 }
             } else {
                 console.error('Gửi tin nhắn thất bại:', response.error);
@@ -579,7 +556,6 @@ export class CustomerChat {
         
         // Tạo ID tạm thời cho tin nhắn
         const tempId = 'temp-file-' + Date.now();
-        console.log('Tạo tin nhắn tệp tạm thời với ID:', tempId);
         
         // Đọc tệp dưới dạng base64
         const reader = new FileReader();
@@ -621,7 +597,6 @@ export class CustomerChat {
                 }
             };
             
-            console.log('Gửi tin nhắn tệp đến server:', file.name);
             
             // Gửi tin nhắn đến server
             this.socket.emit('send_message', messageObj, (response) => {
@@ -629,13 +604,11 @@ export class CustomerChat {
                 const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
                 
                 if (response.success) {
-                    console.log('Gửi tệp thành công, nhận phản hồi từ server:', response);
                     
                     // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
                     if (response.message && response.message.id) {
                         this.socket.sentMessageIds.add(response.message.id);
                         this.messageManager.displayedMessageIds.add(response.message.id);
-                        console.log('Đã lưu ID tin nhắn tệp vào sentMessageIds và displayedMessageIds:', response.message.id);
                     }
                     
                     // Cập nhật tin nhắn tạm thời thành tin nhắn thật
@@ -654,7 +627,6 @@ export class CustomerChat {
                             }
                         }
                         
-                        console.log('Đã cập nhật tin nhắn tệp tạm thời thành công');
                     }
                     
                     this.notification.showNotification('Tải tệp lên thành công.', 'success');
@@ -716,7 +688,6 @@ export class CustomerChat {
         
         // Kiểm tra xem có cần cập nhật thông tin không
         if (this.needInfoUpdate) {
-            console.log('Cần cập nhật thông tin khách hàng');
             this.ui.requestInfoUpdate('public');
             return;
         }
@@ -727,7 +698,6 @@ export class CustomerChat {
         // Lấy danh sách phòng chat công khai
         this.socket.getPublicRooms((response) => {
             if (response.success) {
-                console.log('Nhận danh sách phòng chat công khai:', response.rooms);
                 
                 // Lưu danh sách phòng chat công khai
                 this.publicRooms = response.rooms;
@@ -763,7 +733,6 @@ export class CustomerChat {
         // Tham gia phòng chat công khai
         this.socket.joinPublicRoom(roomId, (response) => {
             if (response.success) {
-                console.log('Tham gia phòng chat công khai thành công:', response);
                 
                 // Lưu ID phòng chat hiện tại
                 this.currentRoomId = roomId;
@@ -783,7 +752,6 @@ export class CustomerChat {
                     if (existingRoomIndex === -1) {
                         // Thêm phòng vào danh sách đã tham gia
                         this.joinedRooms.push(room);
-                        console.log('Đã thêm phòng vào danh sách đã tham gia:', room);
                         
                         // Lưu danh sách phòng đã tham gia vào localStorage
                         this.storage.addJoinedPublicRoom(room);
@@ -828,7 +796,6 @@ export class CustomerChat {
         // Rời phòng chat công khai
         this.socket.leavePublicRoom(this.currentRoomId, (response) => {
             if (response.success) {
-                console.log('Rời phòng chat công khai thành công:', response);
                 
                 // Xóa phòng khỏi danh sách đã tham gia
                 const roomId = this.currentRoomId;
@@ -873,7 +840,6 @@ export class CustomerChat {
         
         // Tạo ID tạm thời cho tin nhắn
         const tempId = 'temp-public-' + Date.now();
-        console.log('Tạo tin nhắn tạm thời với ID:', tempId);
         
         // Hiển thị tin nhắn tạm thời (optimistic UI)
         const tempMessage = {
@@ -898,7 +864,6 @@ export class CustomerChat {
             type: 'text'
         };
         
-        console.log('Gửi tin nhắn đến server:', messageObj);
         
         // Gửi tin nhắn đến server
         this.socket.sendPublicMessage(messageObj, (response) => {
@@ -906,13 +871,11 @@ export class CustomerChat {
             const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
             
             if (response.success) {
-                console.log('Gửi tin nhắn thành công, nhận phản hồi từ server:', response);
                 
                 // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
                 if (response.message && response.message.id) {
                     this.socket.sentMessageIds.add(response.message.id);
                     this.messageManager.displayedMessageIds.add(response.message.id);
-                    console.log('Đã lưu ID tin nhắn vào sentMessageIds và displayedMessageIds:', response.message.id);
                 }
                 
                 // Cập nhật tin nhắn tạm thời thành tin nhắn thật
@@ -922,7 +885,7 @@ export class CustomerChat {
                     tempElement.removeAttribute('data-temp');
                     
                     // Cập nhật thời gian
-                    const timeElement = tempElement.querySelector('.message-time');
+                    const timeElement = tempElement.querySelector('.time');
                     if (timeElement && response.message.createdAt) {
                         try {
                             timeElement.textContent = this.messageManager.formatTime(response.message.createdAt);
@@ -931,7 +894,6 @@ export class CustomerChat {
                         }
                     }
                     
-                    console.log('Đã cập nhật tin nhắn tạm thời thành công');
                 }
             } else {
                 console.error('Gửi tin nhắn thất bại:', response.error);
@@ -965,7 +927,6 @@ export class CustomerChat {
         
         // Tạo ID tạm thời cho tin nhắn
         const tempId = 'temp-public-file-' + Date.now();
-        console.log('Tạo tin nhắn tệp tạm thời với ID:', tempId);
         
         // Đọc tệp dưới dạng base64
         const reader = new FileReader();
@@ -1007,7 +968,6 @@ export class CustomerChat {
                 }
             };
             
-            console.log('Gửi tin nhắn tệp đến server:', file.name);
             
             // Gửi tin nhắn đến server
             this.socket.sendPublicMessage(messageObj, (response) => {
@@ -1015,13 +975,11 @@ export class CustomerChat {
                 const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
                 
                 if (response.success) {
-                    console.log('Gửi tệp thành công, nhận phản hồi từ server:', response);
                     
                     // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
                     if (response.message && response.message.id) {
                         this.socket.sentMessageIds.add(response.message.id);
                         this.messageManager.displayedMessageIds.add(response.message.id);
-                        console.log('Đã lưu ID tin nhắn tệp vào sentMessageIds và displayedMessageIds:', response.message.id);
                     }
                     
                     // Cập nhật tin nhắn tạm thời thành tin nhắn thật
@@ -1031,7 +989,7 @@ export class CustomerChat {
                         tempElement.removeAttribute('data-temp');
                         
                         // Cập nhật thời gian
-                        const timeElement = tempElement.querySelector('.message-time');
+                        const timeElement = tempElement.querySelector('.time');
                         if (timeElement && response.message.createdAt) {
                             try {
                                 timeElement.textContent = this.messageManager.formatTime(response.message.createdAt);
@@ -1040,7 +998,6 @@ export class CustomerChat {
                             }
                         }
                         
-                        console.log('Đã cập nhật tin nhắn tệp tạm thời thành công');
                     }
                     
                     this.notification.showNotification('Tải tệp lên thành công.', 'success');
