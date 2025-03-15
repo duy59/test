@@ -70,7 +70,7 @@ export class SocketManager {
      */
     getServerUrl() {
         // Mặc định sử dụng localhost cho phát triển
-        return 'https://vuquangduy.online';
+        return 'http://localhost:8080';
     }
     
     /**
@@ -379,6 +379,7 @@ export class SocketManager {
     sendPublicMessage(messageObj, callback) {
         
         this.emit('send_public_message', messageObj, (response) => {
+            console.log('response gửi tin nhắn trong phòng chat công khai : ', response);
             if (response && response.success) {
                 
                 // Lưu ID tin nhắn đã gửi vào cả hai Set để ngăn hiển thị lại

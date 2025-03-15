@@ -50,7 +50,9 @@ export class CustomerChat {
             this.customerId = storedData.customerId;
             this.isRegistered = true;
             
-            
+            console.log('thông tin khách hàng đã lưu : ', this.customerInfo);
+            console.log('thông tin khách hàng đã lưu : ', this.customerId);
+
             // Khôi phục danh sách phòng chat công khai đã tham gia
             this.joinedRooms = this.storage.getStoredJoinedPublicRooms() || [];
             
@@ -276,6 +278,9 @@ export class CustomerChat {
             return;
         }
         
+        // Đặt lại currentRoomId để tránh xung đột với phòng chat công khai
+        this.currentRoomId = null;
+        
         // Hiển thị giao diện chat trực tiếp
         this.ui.showDirectChatUI();
         
@@ -345,7 +350,8 @@ export class CustomerChat {
         // Gửi yêu cầu lấy lịch sử chat
         this.socket.emit('get_chat_history', { roomId }, (response) => {
             if (response && response.success) {
-                
+
+                console.log('lịch sử chat từ server : ', response.messages);
                 // Xóa tin nhắn cũ
                 const messagesContainer = this.messageManager.getOrCreateMessagesContainer();
                 messagesContainer.innerHTML = '';
@@ -387,6 +393,8 @@ export class CustomerChat {
         .then(response => response.json())
         .then(data => {
             if (data.messages) {
+
+                console.log('lịch sử chat qua API : ', data.messages);
                 
                 // Xóa tin nhắn cũ
                 const messagesContainer = this.messageManager.getOrCreateMessagesContainer();
@@ -398,7 +406,9 @@ export class CustomerChat {
                         id: msg._id,
                         content: msg.message_text,
                         type: msg.file_data ? 'file' : 'text',
+                        sender_id: msg.sender_id || null,
                         sender: msg.sender_type,
+                        sender_name: msg.sender_name || null,
                         sender_type: msg.sender_type,
                         createdAt: msg.created_at,
                         file: msg.file_data ? {
@@ -466,75 +476,78 @@ export class CustomerChat {
         // Xóa nội dung input
         input.value = '';
         
-        // Tạo ID tạm thời cho tin nhắn
-        const tempId = 'temp-' + Date.now();
-        
-        // Hiển thị tin nhắn tạm thời (optimistic UI)
-        const tempMessage = {
-            id: tempId,
-            content: message,
-            type: 'text',
-            sender: 'customer',
-            sender_type: 'customer',
-            createdAt: new Date(),
-            isTemp: true
-        };
-        
-        this.messageManager.displayMessage(tempMessage);
-        
-        // Cuộn xuống dưới
-        this.messageManager.scrollToBottom();
-        
-        // Tạo đối tượng tin nhắn
-        const messageObj = {
-            room_id: this.currentRoomId,
-            customerId: this.customerId,
-            content: message,
-            type: 'text'
-        };
-        
-        
-        // Gửi tin nhắn đến server
-        this.socket.emit('send_message', messageObj, (response) => {
-            // Tìm tin nhắn tạm thời
-            const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
+        // Kiểm tra loại phòng chat hiện tại và gọi phương thức gửi tin nhắn phù hợp
+        if (this.currentView === 'public-chat') {
+            // Gửi tin nhắn trong phòng chat công khai
+            this.sendPublicMessageWithText(message);
+        } else {
+            // Tạo ID tạm thời cho tin nhắn
+            const tempId = 'temp-' + Date.now();
             
-            if (response.success) {
+            // Hiển thị tin nhắn tạm thời (optimistic UI)
+            const tempMessage = {
+                id: tempId,
+                content: message,
+                type: 'text',
+                sender: 'customer',
+                sender_type: 'customer',
+                createdAt: new Date(),
+                isTemp: true
+            };
+            
+            this.messageManager.displayMessage(tempMessage);
+            
+            // Cuộn xuống dưới
+            this.messageManager.scrollToBottom();
+            
+            // Tạo đối tượng tin nhắn
+            const messageObj = {
+                room_id: this.currentRoomId,
+                customerId: this.customerId,
+                content: message,
+                type: 'text'
+            };
+            
+            // Gửi tin nhắn đến server
+            this.socket.emit('send_message', messageObj, (response) => {
+                // Tìm tin nhắn tạm thời
+                const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
                 
-                // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
-                if (response.message && response.message.id) {
-                    this.socket.sentMessageIds.add(response.message.id);
-                    this.messageManager.displayedMessageIds.add(response.message.id);
-                }
-                
-                // Cập nhật tin nhắn tạm thời thành tin nhắn thật
-                if (tempElement) {
-                    tempElement.setAttribute('data-id', response.message.id);
-                    tempElement.classList.remove('temp-message');
-                    tempElement.removeAttribute('data-temp');
-                    
-                    // Cập nhật thời gian
-                    const timeElement = tempElement.querySelector('.time');
-                    if (timeElement && response.message.createdAt) {
-                        try {
-                            timeElement.textContent = this.messageManager.formatTime(response.message.createdAt);
-                        } catch (error) {
-                            console.error('Lỗi khi định dạng thời gian:', error);
-                        }
+                if (response.success) {
+                    // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
+                    if (response.message && response.message.id) {
+                        this.socket.sentMessageIds.add(response.message.id);
+                        this.messageManager.displayedMessageIds.add(response.message.id);
                     }
                     
+                    // Cập nhật tin nhắn tạm thời thành tin nhắn thật
+                    if (tempElement) {
+                        tempElement.setAttribute('data-id', response.message.id);
+                        tempElement.classList.remove('temp-message');
+                        tempElement.removeAttribute('data-temp');
+                        
+                        // Cập nhật thời gian
+                        const timeElement = tempElement.querySelector('.time');
+                        if (timeElement && response.message.createdAt) {
+                            try {
+                                timeElement.textContent = this.messageManager.formatTime(response.message.createdAt);
+                            } catch (error) {
+                                console.error('Lỗi khi định dạng thời gian:', error);
+                            }
+                        }
+                    }
+                } else {
+                    console.error('Gửi tin nhắn thất bại:', response.error);
+                    this.notification.showNotification(response.error || 'Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
+                    
+                    // Đánh dấu tin nhắn lỗi
+                    if (tempElement) {
+                        tempElement.classList.add('error');
+                        tempElement.setAttribute('title', 'Không thể gửi tin nhắn');
+                    }
                 }
-            } else {
-                console.error('Gửi tin nhắn thất bại:', response.error);
-                this.notification.showNotification(response.error || 'Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
-                
-                // Đánh dấu tin nhắn lỗi
-                if (tempElement) {
-                    tempElement.classList.add('error');
-                    tempElement.setAttribute('title', 'Không thể gửi tin nhắn');
-                }
-            }
-        });
+            });
+        }
     }
     
     /**
@@ -821,25 +834,37 @@ export class CustomerChat {
     }
     
     /**
-     * Gửi tin nhắn trong phòng chat công khai
+     * Gửi tin nhắn trong phòng chat công khai với nội dung được truyền vào
+     * @param {string} inputText - Nội dung tin nhắn
      */
-    sendPublicMessage() {
-        const { chatInput } = this.ui.elements;
-        const input = chatInput.querySelector('input[type="text"]');
-        const message = input.value.trim();
+    sendPublicMessageWithText(inputText) {
+        console.log('Gọi sendPublicMessageWithText với:', inputText);
         
-        if (!message) return;
+        const message = inputText.trim();
+        console.log('Message sau khi trim:', message);
+        console.log('Message length:', message.length);
+        
+        if (!message) {
+            console.log('Tin nhắn trống, không gửi');
+            return;
+        }
         
         if (!this.currentRoomId) {
+            console.log('Chưa tham gia phòng chat nào');
             this.notification.showNotification('Bạn chưa tham gia phòng chat nào.', 'error');
             return;
         }
         
         // Xóa nội dung input
-        input.value = '';
+        const { chatInput } = this.ui.elements;
+        const input = chatInput.querySelector('input[type="text"]');
+        if (input) {
+            input.value = '';
+        }
         
         // Tạo ID tạm thời cho tin nhắn
         const tempId = 'temp-public-' + Date.now();
+        console.log('Tạo tin nhắn tạm thời với ID:', tempId);
         
         // Hiển thị tin nhắn tạm thời (optimistic UI)
         const tempMessage = {
@@ -864,18 +889,22 @@ export class CustomerChat {
             type: 'text'
         };
         
+        console.log('Gửi tin nhắn đến server:', messageObj);
         
         // Gửi tin nhắn đến server
         this.socket.sendPublicMessage(messageObj, (response) => {
+            console.log('Nhận phản hồi từ server:', response);
             // Tìm tin nhắn tạm thời
             const tempElement = document.querySelector(`.message[data-id="${tempId}"]`);
             
             if (response.success) {
+                console.log('Gửi tin nhắn thành công, cập nhật tin nhắn tạm thời');
                 
                 // Lưu ID tin nhắn vào cả hai Set để ngăn hiển thị lại
                 if (response.message && response.message.id) {
                     this.socket.sentMessageIds.add(response.message.id);
                     this.messageManager.displayedMessageIds.add(response.message.id);
+                    console.log('Đã lưu ID tin nhắn:', response.message.id);
                 }
                 
                 // Cập nhật tin nhắn tạm thời thành tin nhắn thật
@@ -893,7 +922,6 @@ export class CustomerChat {
                             console.error('Lỗi khi định dạng thời gian:', error);
                         }
                     }
-                    
                 }
             } else {
                 console.error('Gửi tin nhắn thất bại:', response.error);

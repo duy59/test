@@ -134,13 +134,19 @@ export class UIManager {
             case 'direct-chat':
             case 'chat-room':
             case 'room-list':
+                // Đặt lại currentRoomId khi quay về màn hình chào mừng
+                this.chatApp.currentRoomId = null;
                 this.showWelcomeScreen();
                 break;
             case 'public-rooms':
+                // Đặt lại currentRoomId khi quay về màn hình chào mừng
+                this.chatApp.currentRoomId = null;
                 this.showWelcomeScreen();
                 break;
             case 'public-chat':
                 // Thay vì rời phòng, chỉ quay lại màn hình danh sách phòng chat công khai
+                // Đặt lại currentRoomId khi quay về danh sách phòng
+                this.chatApp.currentRoomId = null;
                 this.chatApp.showPublicRooms();
                 break;
             case 'register':
@@ -425,13 +431,16 @@ export class UIManager {
      * Hiển thị giao diện chat trực tiếp
      */
     showDirectChatUI() {
-        const { chatContent, backBtn, chatInput } = this.elements;
+        const { chatContent, backBtn, chatInput, chatHeader } = this.elements;
         
         // Hiển thị nút quay lại
         backBtn.style.display = 'block';
         
         // Xóa nội dung cũ
         chatContent.innerHTML = '';
+        
+        // Cập nhật tiêu đề
+        chatHeader.querySelector('.title').textContent = 'Chat Hỗ Trợ';
         
         // Tạo container cho tin nhắn
         const messagesContainer = document.createElement('div');
@@ -440,6 +449,48 @@ export class UIManager {
         
         // Hiển thị phần nhập liệu
         chatInput.style.display = 'flex';
+        
+        // Xóa sự kiện cũ và thêm sự kiện mới cho nút gửi
+        const sendButton = chatInput.querySelector('button');
+        if (sendButton) {
+            // Xóa tất cả các event listener cũ
+            const newSendButton = sendButton.cloneNode(true);
+            sendButton.parentNode.replaceChild(newSendButton, sendButton);
+            
+            // Thêm event listener mới
+            newSendButton.addEventListener('click', () => {
+                this.chatApp.sendMessage();
+            });
+        }
+        
+        // Xóa sự kiện cũ và thêm sự kiện mới cho input text
+        const textInput = chatInput.querySelector('input[type="text"]');
+        if (textInput) {
+            // Xóa tất cả các event listener cũ
+            const newTextInput = textInput.cloneNode(true);
+            textInput.parentNode.replaceChild(newTextInput, textInput);
+            
+            // Thêm event listener mới
+            newTextInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.chatApp.sendMessage();
+                }
+            });
+        }
+        
+        // Xóa sự kiện cũ và thêm sự kiện mới cho input file
+        const fileInput = chatInput.querySelector('input[type="file"]');
+        if (fileInput) {
+            // Xóa tất cả các event listener cũ
+            const newFileInput = fileInput.cloneNode(true);
+            fileInput.parentNode.replaceChild(newFileInput, fileInput);
+            
+            // Thêm event listener mới
+            newFileInput.addEventListener('change', (e) => {
+                this.chatApp.handleFileUpload(e);
+            });
+        }
         
         // Cập nhật view hiện tại
         this.chatApp.currentView = 'direct-chat';
@@ -923,17 +974,30 @@ export class UIManager {
         const sendButton = chatInput.querySelector('button');
         if (sendButton) {
             sendButton.removeEventListener('click', this.chatApp.sendMessage);
-            sendButton.addEventListener('click', () => this.chatApp.sendPublicMessage());
+            sendButton.addEventListener('click', () => {
+                console.log('Đang gửi tin nhắn công khai từ nút gửi');
+                const inputElement = chatInput.querySelector('input[type="text"]');
+                console.log('Input value trước khi gửi:', inputElement.value);
+                this.chatApp.sendPublicMessageWithText(inputElement.value);
+            });
         }
         
         // Thêm sự kiện cho input text trong phòng chat công khai
         const textInput = chatInput.querySelector('input[type="text"]');
         if (textInput) {
+            // Xóa sự kiện cũ
             textInput.removeEventListener('keypress', (e) => {
                 if (e.key === 'Enter') this.chatApp.sendMessage();
             });
-            textInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') this.chatApp.sendPublicMessage();
+            
+            // Thêm sự kiện mới
+            textInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault(); // Ngăn chặn hành vi mặc định
+                    console.log('Đang gửi tin nhắn công khai từ phím Enter');
+                    console.log('Input value trước khi gửi:', textInput.value);
+                    this.chatApp.sendPublicMessageWithText(textInput.value);
+                }
             });
         }
     }

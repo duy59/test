@@ -92,11 +92,6 @@ export class MessageManager {
      * Hiển thị tin nhắn
      */
     displayMessage(message) {
-        // Kiểm tra xem tin nhắn đã được hiển thị chưa
-        // if (message.id && this.displayedMessageIds.has(message.id) && !message.isTemp) {
-        //     console.log('Tin nhắn đã được hiển thị trước đó, bỏ qua:', message.id);
-        //     return;
-        // }
         
         // Kiểm tra xem tin nhắn đã tồn tại trong DOM chưa
         const messagesContainer = this.getOrCreateMessagesContainer();
